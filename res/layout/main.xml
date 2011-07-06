@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ViewFlipper xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/flipper">
+
+	<LinearLayout 
+	    android:orientation="vertical"
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"
+	    android:isScrollContainer="true">
+    	<com.markupartist.android.widget.ActionBar
+		    android:id="@+id/actionbar"
+		    style="@style/ActionBar" />
+        <TextView android:layout_marginTop="5px" android:text="TextView" android:layout_height="wrap_content" android:id="@+id/tvVerse" android:textStyle="italic" android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="match_parent"></TextView>
+        <TextSwitcher android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/tswitch" android:isScrollContainer="true">
+            <TextView android:layout_marginTop="5px" android:text="TextView" android:layout_height="match_parent" android:id="@+id/tvComment" android:layout_margin="5px" android:layout_width="match_parent"></TextView>
+        </TextSwitcher>
+    </LinearLayout>
+    
+</ViewFlipper>
