@@ -6,7 +6,7 @@
 	<TextView android:layout_margin="4dip" android:layout_marginBottom="0px" android:text="Date 00, 2011"
 		android:id="@+id/tvTodaysDate" android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:textColor="#FFFF0000" android:textStyle="bold" android:shadowColor="#FF000000" android:shadowRadius="12.5"
+		android:textColor="#FFFF0000" android:textStyle="bold"
 		android:layout_gravity="center"></TextView>	
 	<TextView android:layout_margin="2dip" android:text="Static Text"
 		android:id="@+id/tvTodaysText" android:layout_width="match_parent"

@@ -27,7 +27,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.DatePicker;
 import android.widget.TextSwitcher;
 import android.widget.TextView;
-import android.widget.ViewFlipper;
+import android.widget.Toast;
 
 
 public class ESDailyActivity extends Activity {
@@ -53,8 +53,9 @@ public class ESDailyActivity extends Activity {
 	ActionBar actionBar;
 	SimpleDateFormat dateFormat;
 	String today;
-	String yesterday;
-	String tomorrow;
+	String currentDate;
+	String nextDate;
+	String prevDate;
 	String[] currentScripture;
 	static final int DATE_DIALOG_ID=0;
 	
@@ -62,13 +63,13 @@ public class ESDailyActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        textSwitcher = (TextSwitcher)findViewById(R.id.tswitch);
+        
         slideLeftIn = AnimationUtils.loadAnimation(this, R.anim.slide_left_in);
         slideLeftOut = AnimationUtils.loadAnimation(this, R.anim.slide_left_out);
         slideRightIn = AnimationUtils.loadAnimation(this, R.anim.slide_right_in);
         slideRightOut = AnimationUtils.loadAnimation(this, R.anim.slide_right_out);
         
-        gestureDetector = new GestureDetector(new MyGestureDetector());
+        gestureDetector = new GestureDetector(getApplicationContext(), new MyGestureDetector());
         gestureListener = new View.OnTouchListener() {
             public boolean onTouch(View v, MotionEvent event) {
                 if (gestureDetector.onTouchEvent(event)) {
@@ -79,7 +80,7 @@ public class ESDailyActivity extends Activity {
         };
     
         dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        gotoToday();
+        
         dbhelper = new DBHelper(this); 
         try {
         	dbhelper.createDataBase();
@@ -90,11 +91,12 @@ public class ESDailyActivity extends Activity {
 	 		throw sqle;
 	 	}
         setContentView(R.layout.main);
+        textSwitcher = (TextSwitcher) findViewById(R.id.tswitch);
         tvVerse = (TextView) findViewById(R.id.tvVerse);
         tvComment = (TextView) findViewById(R.id.tvComment);
         
         actionBar = (ActionBar) findViewById(R.id.actionbar);
-        fetchTodaysText();
+        gotoToday();
         actionBar.setHomeAction(new UpdateAction(today, R.drawable.ic_title_home_default));
         actionBar.setTitle(today);
         //actionBar.addAction(new UpdateAction(yesterday, R.drawable.actionbar_back_indicator));
@@ -111,22 +113,31 @@ public class ESDailyActivity extends Activity {
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             try {
+            	if (e1.getY() - e2.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY)>SWIPE_THRESHOLD_VELOCITY) {
+            		setDates(prevDate);
+            	}
+            	if (e2.getY() - e1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY)>SWIPE_THRESHOLD_VELOCITY) {
+            		setDates(nextDate);
+            	}
                 if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
                     return false;
                 // right to left swipe
                 if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
                 	textSwitcher.setInAnimation(slideLeftIn);
                 	textSwitcher.setOutAnimation(slideLeftOut);
-                	textSwitcher.showNext();
+                	setDates(nextDate);
+
+                	//textSwitcher.setText(currentScripture[1]);
+                	//textSwitcher.showNext();
                 }  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
                 	textSwitcher.setInAnimation(slideRightIn);
                 	textSwitcher.setOutAnimation(slideRightOut);
-                	fetchText(tomorrow); 
-                	updateDates(tomorrow);
-                	textSwitcher.setText(currentScripture[1]);
+                	setDates(prevDate);
+                	
+                	//textSwitcher.setText(currentScripture[1]);
                 }
             } catch (Exception e) {
-                // nothing
+                Log.e("ESD11", e.getMessage());
             }
             return false;
         }
@@ -161,8 +172,7 @@ public class ESDailyActivity extends Activity {
 					.append("-").append(dayOfMonth);
 				try {
 					String date = dateFormat.format(dateFormat.parse(sb.toString()));
-					updateDates(date);
-	                fetchText(date);
+					setDates(date);
 				} catch (ParseException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -183,27 +193,29 @@ public class ESDailyActivity extends Activity {
     	if (results!=null) {
     		//updateDates(date);
     		currentScripture = results;
-    		actionBar.setTitle(today);
+    		actionBar.setTitle(date);
 	    	tvVerse.setText(results[0]);
 	    	tvComment.setText(results[1]);
 	    	
     	} else { 
+    		Toast.makeText(getApplicationContext(), "Date not found!", 3000);
     		Log.d("ESD", "found nothing!" ); 
     	}
     }
-    private void updateDates(String date) { 
-    	today = date;
+    private void setDates(String date) { 
+    	currentDate = date;
     	Calendar cal = Calendar.getInstance();
     	try {
+    		fetchText(date);
     		Date d = dateFormat.parse(date);
 			cal.setTime(d);
 			mYear = cal.get(Calendar.YEAR);
 			mMonth = cal.get(Calendar.MONTH);
 			mDay = cal.get(Calendar.DAY_OF_MONTH);;
 			cal.add(Calendar.DATE, -1);
-	    	yesterday = dateFormat.format(cal.getTime());
+	    	prevDate = dateFormat.format(cal.getTime());
 	    	cal.add(Calendar.DATE, +2);
-	    	tomorrow = dateFormat.format(cal.getTime());
+	    	nextDate = dateFormat.format(cal.getTime());
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -212,11 +224,7 @@ public class ESDailyActivity extends Activity {
     private void gotoToday() {
     	Calendar calendar = Calendar.getInstance();
     	today = dateFormat.format(calendar.getTime());
-    	updateDates(today);
-    }
-    
-    public void fetchTodaysText() {
-    	fetchText(today);
+    	setDates(today);
     }
     
     private class UpdateAction implements Action {
@@ -233,7 +241,7 @@ public class ESDailyActivity extends Activity {
 		}
 		@Override
 		public void performAction(View view) {
-			fetchText(mDate);
+			setDates(mDate);
 		}
     	
     }
