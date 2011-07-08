@@ -1,0 +1,17 @@
+Examine the Scriptures Daily for Android
+
+A simple android app (and screen widget) to read the Bible daily. 
+
+The material is scrapped from the Examining the Scriptures Daily booklet, published by the WatchTower Bible and Tract Society.
+Please see the official site for a PDF/ePub version of the same booklet [http://www.jw.org/index.html?option=QrYQCsVrGlBBX]
+
+This application is not officially released by the Watchtower Bible and Tract Society.
+
+F.A.Q.
+* Do you accept donations? 
+Not for this app. Please place any donations in the Worldwide Work (Mt 24:14) donations box at your local Kingdom Hall.
+* Can you add features?
+If I have time and feel it's useful :)
+* How do I add my language?
+You will need to scrap the database from the WTLib. Please see the import.py script.  
+

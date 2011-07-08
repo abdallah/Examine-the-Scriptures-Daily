@@ -6,28 +6,28 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import com.markupartist.android.widget.ActionBar;
-import com.markupartist.android.widget.ActionBar.Action;
-import com.markupartist.android.widget.ActionBar.IntentAction;
-
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.content.Intent;
 import android.database.SQLException;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.DatePicker;
-import android.widget.TextSwitcher;
+//import android.widget.TextSwitcher;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ViewFlipper;
 
 
 public class ESDailyActivity extends Activity {
@@ -40,7 +40,8 @@ public class ESDailyActivity extends Activity {
 	private Animation slideLeftOut;
 	private Animation slideRightIn;
     private Animation slideRightOut;
-    private TextSwitcher textSwitcher;
+    //private TextSwitcher textSwitcher;
+    private ViewFlipper flipper;
     
 	//private Context context;
 	private int mYear;
@@ -49,9 +50,14 @@ public class ESDailyActivity extends Activity {
 
 	private DBHelper dbhelper;
 	TextView tvVerse;
+	TextView tvVerse2;
 	TextView tvComment;
-	ActionBar actionBar;
+	TextView tvComment2;
+	TextView tvTitle;
+	TextView tvTitle2;
+	boolean otherView;
 	SimpleDateFormat dateFormat;
+	SimpleDateFormat displayFormat;
 	String today;
 	String currentDate;
 	String nextDate;
@@ -80,7 +86,7 @@ public class ESDailyActivity extends Activity {
         };
     
         dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        
+        displayFormat = new SimpleDateFormat("EEEE, MMMM d");
         dbhelper = new DBHelper(this); 
         try {
         	dbhelper.createDataBase();
@@ -91,50 +97,68 @@ public class ESDailyActivity extends Activity {
 	 		throw sqle;
 	 	}
         setContentView(R.layout.main);
-        textSwitcher = (TextSwitcher) findViewById(R.id.tswitch);
+        flipper = (ViewFlipper) findViewById(R.id.flipper);
         tvVerse = (TextView) findViewById(R.id.tvVerse);
         tvComment = (TextView) findViewById(R.id.tvComment);
+        tvVerse2 = (TextView) findViewById(R.id.tvVerse2);
+        tvComment2 = (TextView) findViewById(R.id.tvComment2);
+        tvTitle = (TextView) findViewById(R.id.tvTitle);
+        tvTitle2 = (TextView) findViewById(R.id.tvTitle2);
+        tvComment.setMovementMethod(new ScrollingMovementMethod());
+        tvComment2.setMovementMethod(new ScrollingMovementMethod());
+
+        otherView = false;
         
-        actionBar = (ActionBar) findViewById(R.id.actionbar);
         gotoToday();
-        actionBar.setHomeAction(new UpdateAction(today, R.drawable.ic_title_home_default));
-        actionBar.setTitle(today);
-        //actionBar.addAction(new UpdateAction(yesterday, R.drawable.actionbar_back_indicator));
-        actionBar.setOnTitleClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				showDialog(DATE_DIALOG_ID);
-			}
-    	});
-        actionBar.addAction(new IntentAction(this, createShareIntent(), R.drawable.ic_title_share_default));
+        
+ 
     }
     
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+        case R.id.mnuGoto:
+        	showDialog(DATE_DIALOG_ID);
+            return true;
+        case R.id.mnuShare:
+        	Intent i = createShareIntent();
+        	startActivity(i);
+            return true;
+        case R.id.mnuToday:
+        	gotoToday();
+        	return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
     class MyGestureDetector extends SimpleOnGestureListener {
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             try {
-            	if (e1.getY() - e2.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY)>SWIPE_THRESHOLD_VELOCITY) {
-            		setDates(prevDate);
-            	}
-            	if (e2.getY() - e1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY)>SWIPE_THRESHOLD_VELOCITY) {
-            		setDates(nextDate);
-            	}
                 if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
                     return false;
                 // right to left swipe
                 if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                	textSwitcher.setInAnimation(slideLeftIn);
-                	textSwitcher.setOutAnimation(slideLeftOut);
+                	flipper.setInAnimation(slideLeftIn);
+                	flipper.setOutAnimation(slideLeftOut);
+                	otherView = !otherView;
                 	setDates(nextDate);
+                	flipper.showNext();
 
-                	//textSwitcher.setText(currentScripture[1]);
-                	//textSwitcher.showNext();
                 }  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                	textSwitcher.setInAnimation(slideRightIn);
-                	textSwitcher.setOutAnimation(slideRightOut);
+                	flipper.setInAnimation(slideRightIn);
+                	flipper.setOutAnimation(slideRightOut);
+                	otherView = !otherView;
                 	setDates(prevDate);
-                	
-                	//textSwitcher.setText(currentScripture[1]);
+                	flipper.showPrevious();
                 }
             } catch (Exception e) {
                 Log.e("ESD11", e.getMessage());
@@ -181,27 +205,43 @@ public class ESDailyActivity extends Activity {
         };
 
     public Intent createShareIntent() { 
+    	StringBuilder sb = new StringBuilder(currentScripture[1]).append("\n--\nsent from my droid(tm)");
     	Intent intent = new Intent(Intent.ACTION_SEND);
     	intent.putExtra(Intent.EXTRA_SUBJECT, currentScripture[0]);
-    	intent.putExtra(Intent.EXTRA_TEXT, currentScripture[1]);
+    	intent.putExtra(Intent.EXTRA_TEXT, sb.toString());
     	
     	intent.setType("text/plain");
     	return intent;
     }
+    
     public void fetchText(String date) {
+    	String displayDate = date;
+    	try {
+			Date d = dateFormat.parse(date);
+			displayDate = displayFormat.format(d);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
     	String[] results = dbhelper.fetchText(date);
     	if (results!=null) {
-    		//updateDates(date);
     		currentScripture = results;
-    		actionBar.setTitle(date);
-	    	tvVerse.setText(results[0]);
-	    	tvComment.setText(results[1]);
-	    	
+    		if (!otherView) {
+    			tvTitle.setText(displayDate);
+		    	tvVerse.setText(results[0]);
+		    	tvComment.setText(results[1]);
+    		} else {
+    			tvTitle2.setText(displayDate);
+		    	tvVerse2.setText(results[0]);
+		    	tvComment2.setText(results[1]);
+    		}
     	} else { 
     		Toast.makeText(getApplicationContext(), "Date not found!", 3000);
     		Log.d("ESD", "found nothing!" ); 
     	}
     }
+    
     private void setDates(String date) { 
     	currentDate = date;
     	Calendar cal = Calendar.getInstance();
@@ -225,25 +265,6 @@ public class ESDailyActivity extends Activity {
     	Calendar calendar = Calendar.getInstance();
     	today = dateFormat.format(calendar.getTime());
     	setDates(today);
-    }
-    
-    private class UpdateAction implements Action {
-    	private int mDrawable;
-    	private String mDate;
-    	public UpdateAction(String date, int drawable) {
-            mDrawable = drawable;
-            mDate = date;
-        }
-
-		@Override
-		public int getDrawable() {
-			return mDrawable;
-		}
-		@Override
-		public void performAction(View view) {
-			setDates(mDate);
-		}
-    	
     }
     
    
