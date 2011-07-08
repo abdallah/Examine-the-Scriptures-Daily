@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/mnuToday" android:title="Today" android:icon="@android:drawable/ic_menu_today"></item>
+    <item android:id="@+id/mnuShare" android:title="Share" android:icon="@android:drawable/ic_menu_share"></item>
+    <item android:id="@+id/mnuGoto" android:title="Go to date" android:icon="@android:drawable/ic_menu_day"></item>
+</menu>
