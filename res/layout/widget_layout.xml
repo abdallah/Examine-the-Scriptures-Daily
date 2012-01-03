@@ -1,16 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent" android:layout_height="match_parent"
-	android:background="@drawable/shape" android:layout_margin="8dip" 
+	android:layout_margin="8dip" 
+	android:background="@drawable/shape"
 	android:orientation="vertical">
-	<TextView android:layout_margin="4dip" android:layout_marginBottom="0px" android:text="Date 00, 2011"
+	<TextView android:layout_margin="2dip" 
+		android:layout_marginBottom="2px" android:text="Date 00, 2011"
 		android:id="@+id/tvTodaysDate" android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:textColor="#FFFF0000" android:textStyle="bold"
+		android:textColor="#FF000000" 
+		android:typeface="serif"
+		android:textStyle="bold"
+		android:gravity="center"
+		android:textSize="18sp"
 		android:layout_gravity="center"></TextView>	
+	<Button
+	 	android:layout_width="match_parent"
+	 	android:layout_gravity="center"
+		android:layout_height="3dip"
+		android:background="#FF000000" ></Button>>
 	<TextView android:layout_margin="2dip" android:text="Static Text"
 		android:id="@+id/tvTodaysText" android:layout_width="match_parent"
-		android:layout_height="match_parent" 
-		android:textSize="11sp" android:textColor="#FF000000"
-		android:layout_gravity="center" android:ellipsize="end"></TextView>
-</LinearLayout>	<!--   style="@android:style/TextAppearance.Small" -->
+		android:layout_height="wrap_content"
+		android:height="150dip"
+		android:gravity="center"
+		android:typeface="sans" android:textStyle="italic"
+		android:textSize="16sp" android:textColor="#FF000000"
+		android:layout_gravity="top"
+		android:ellipsize="end"	></TextView>
+</LinearLayout>
