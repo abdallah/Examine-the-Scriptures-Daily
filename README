@@ -13,5 +13,7 @@ Not for this app. Please place any donations in the Worldwide Work (Mt 24:14) do
 * Can you add features?
 If I have time and feel it's useful :)
 * How do I add my language?
-You will need to scrap the database from the WTLib. Please see the import.py script.  
-
+- Download the ePub file for your language from http://jw.org/ (English is already included, no need to import it). 
+- Then use the import button in the app to import the ePub file. This process may take a while. 
+- Click on Preferences and choose your language, then restart the app (close/open)
+- You can also create a widget with your prefered language on the home screen. Clicking on the widget will load the main app in the same langauge
