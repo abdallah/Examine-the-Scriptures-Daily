@@ -33,12 +33,15 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.text.Html;
 import android.text.Spanned;
@@ -68,12 +71,14 @@ public class ESDailyActivity extends Activity {
 	
 	private GestureDetector gestureDetector;
 	View.OnTouchListener gestureListener;
+	Context ctx;
 	private Animation slideLeftIn;
 	private Animation slideLeftOut;
 	private Animation slideRightIn;
     private Animation slideRightOut;
     //private TextSwitcher textSwitcher;
     private ViewFlipper flipper;
+    public String lang;
     
 	//private Context context;
 	private int mYear;
@@ -102,8 +107,11 @@ public class ESDailyActivity extends Activity {
 	static ESDailyActivity ACTIVITY;
 	static PendingIntent RESTART_INTENT;
 	private static final int REQUEST_PICK_FILE = 1;
+	private static final int REQUEST_PREFERENCES = 2;
+    private static final String PREF_PREFIX_KEY = "lang_widget_";
 
-	DBHelper dbHelper;		
+	DBHelper dbHelper;
+	ProgressDialog dialog;
 	
 	public void initUI() {
 		ViewConfiguration vc = ViewConfiguration.get(getApplicationContext());
@@ -136,6 +144,11 @@ public class ESDailyActivity extends Activity {
         wv2 = (WebView) this.findViewById(R.id.webView2);
         
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if (getIntent().hasExtra("lang")) {
+        	String widgetId = getIntent().getDataString().replaceAll(".*/(\\d+)", "$1");
+        	lang = preferences.getString(PREF_PREFIX_KEY + widgetId, null);
+        }
+        if (lang==null) { lang = preferences.getString("lang", "e"); }
         int zoomLevel = preferences.getInt("zoom", 150);
 		wv1.setOnTouchListener(gestureListener);
 		wv2.setOnTouchListener(gestureListener);
@@ -153,6 +166,7 @@ public class ESDailyActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ACTIVITY = this;
+        ctx = this;
         RESTART_INTENT = PendingIntent.getActivity(this.getBaseContext(), 0, new Intent(getIntent()), getIntent().getFlags());
         initUI();
         gotoToday();
@@ -195,9 +209,9 @@ public class ESDailyActivity extends Activity {
 			intent.putExtra(FilePickerActivity.EXTRA_FILE_PATH, "/sdcard/download");
 			startActivityForResult(intent, REQUEST_PICK_FILE);
 			return true;
-//        case R.id.mnuPrefs:
-//        	Intent p = new Intent(ESDailyActivity.this, PrefsActivity.class);
-//			startActivity(p);
+        case R.id.mnuPrefs:
+        	Intent p = new Intent(ESDailyActivity.this, PrefsActivity.class);
+			startActivityForResult(p, REQUEST_PREFERENCES);
         default:
             return super.onOptionsItemSelected(item);
         }
@@ -212,14 +226,37 @@ public class ESDailyActivity extends Activity {
 					// Get the file path
 					File f = new File(
 							data.getStringExtra(FilePickerActivity.EXTRA_FILE_PATH));
-					Toast.makeText(getApplicationContext(), "Please hold while I import the epub file", Toast.LENGTH_SHORT);
-					EpubHelper epub = new EpubHelper(f.getPath(), getApplicationContext());
-					epub.exportToDB();
-					Toast.makeText(getApplicationContext(), "Import complete", Toast.LENGTH_SHORT);
+					dialog = ProgressDialog.show(ctx, "Reading ePub file", "Please wait...", true);
+					importEPub(f.getPath());
+					
 				}
+				break;
+			case REQUEST_PREFERENCES:
+				break;
 			}
 		}
 	}
+    
+    
+	public void importEPub(final String path) {
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				EpubHelper epub = new EpubHelper(path, ctx);
+				epub.exportToDB();
+				handler.sendEmptyMessage(0);
+			}
+		};
+		new Thread(runnable).start();
+		
+	}
+    
+    private Handler handler = new Handler() { 
+    	@Override
+    	public void handleMessage(Message msg) {
+    		dialog.dismiss();
+    	}
+    };
     
     class MyGestureDetector extends SimpleOnGestureListener {
         @Override
@@ -312,7 +349,7 @@ public class ESDailyActivity extends Activity {
     }
     
     public void fetchText(String date) {
-    	String[] data = dbHelper.fetchText(date, "document");
+    	String[] data = dbHelper.fetchText(date, "document", this.lang);
     	if (data!=null) {
     		currentScripture = data[0];
     		if (!otherView) {
@@ -323,7 +360,7 @@ public class ESDailyActivity extends Activity {
     			wv2.setWebViewClient(new WVC(currentDate, dbHelper));
     		}
     	} else { 
-    		Toast.makeText(getApplicationContext(), "Date not found!", 3000);
+    		Toast.makeText(ctx, "Date not found!", 3000);
     		Log.d("ESD", "found nothing!" ); 
     	}
     }
@@ -373,7 +410,7 @@ public class ESDailyActivity extends Activity {
 	    	DocumentBuilder builder;
 			try {
 				builder = builderFactory.newDocumentBuilder();
-				String[] refDoc = this.dbHelper.fetchText(currentDate, "references");
+				String[] refDoc = this.dbHelper.fetchText(currentDate, "references", lang);
 				Document document = builder.parse(new ByteArrayInputStream(refDoc[0].getBytes()));
 				TransformerFactory transFactory = TransformerFactory.newInstance();
 				Transformer transformer = transFactory.newTransformer();
@@ -422,5 +459,7 @@ public class ESDailyActivity extends Activity {
 	        return true;
 	    }
 	}
+
+	
    
 }

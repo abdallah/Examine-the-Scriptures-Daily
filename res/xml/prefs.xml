@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
   xmlns:android="http://schemas.android.com/apk/res/android" android:key="prefs">
-    <CheckBoxPreference android:title="Show daily reminder" android:key="reminder"></CheckBoxPreference>
-    <in.grat.esd2.TimePreference
-    	android:key="alarm_time" android:defaultValue="06:00" 
-    	android:summary="Set your desired time for the notification reminder" android:title="Notification Time" 
-    	android:dependency="reminder"></in.grat.esd2.TimePreference>
+<!--     <CheckBoxPreference android:title="Show daily reminder" android:key="reminder"></CheckBoxPreference> -->
+<!--     <in.grat.esd2.TimePreference -->
+<!--     	android:key="alarm_time" android:defaultValue="06:00"  -->
+<!--     	android:summary="Set your desired time for the notification reminder" android:title="Notification Time"  -->
+<!--     	android:dependency="reminder"></in.grat.esd2.TimePreference> -->
     <Preference android:defaultValue="150" android:key="zoom" android:title="Default Zoom %" android:enabled="true"></Preference>
+    <Preference android:key="lang" android:title="Language" android:defaultValue="E"></Preference>
 </PreferenceScreen>

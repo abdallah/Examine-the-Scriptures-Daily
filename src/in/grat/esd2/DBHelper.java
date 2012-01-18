@@ -4,6 +4,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -18,9 +21,11 @@ public class DBHelper extends SQLiteOpenHelper {
 	//The Android's default system path of your application database.
 	static final String DATABASE_NAME = "esd";
     static final String TABLE_NAME = "esd";
+    static final String LANG_TABLE_NAME = "languages";
     static final String KEY_DATE = "date";
     static final String KEY_TEXT = "dailytext";
     static final String KEY_REFS = "refs";
+    static final String KEY_LANG = "lang";
 	
     private static final String DATABASE_PATH = "/data/data/in.grat.esd2/databases/";
 	    
@@ -122,18 +127,39 @@ public class DBHelper extends SQLiteOpenHelper {
 	public void onCreate(SQLiteDatabase db) {
 		// db.execSQL("CREATE TABLE "+TABLE_NAME+" (_id integer primary key autoincrement, "+KEY_DATE+" TEXT, "+KEY_TEXT+" TEXT, "+KEY_REFS+" TEXT);");
 	}
- 
-	@Override
-	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
- 
+	public static List<String> GetColumns(SQLiteDatabase db, String tableName) {
+	    List<String> ar = null;
+	    Cursor c = null;
+	    try {
+	        c = db.rawQuery("select * from " + tableName + " limit 1", null);
+	        if (c != null) {
+	            ar = new ArrayList<String>(Arrays.asList(c.getColumnNames()));
+	        }
+	    } catch (Exception e) {
+	        //Log.v(tableName, e.getMessage(), e);
+	        e.printStackTrace();
+	    } finally {
+	        if (c != null)
+	            c.close();
+	    }
+	    return ar;
 	}
 
-	public String[] fetchText(String date, String type) {
+	@Override
+	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+		List<String> columns = GetColumns(db, TABLE_NAME);
+		if (! columns.contains(new String("lang"))) 
+			db.execSQL("ALTER TABLE "+TABLE_NAME+" ADD COLUMN lang TEXT DEFAULT 'E';");
+	}
+
+	public String[] fetchText(String date, String type, String lang) {
 		String doc = type.equalsIgnoreCase("document") ? KEY_TEXT : KEY_REFS;
 		try {
-			Cursor mCursor = myDataBase.query(TABLE_NAME, new String[] {
-				KEY_DATE, doc },
-				KEY_DATE + "='"+date+"'", null, null, null, null, null);
+			Cursor mCursor = myDataBase.query(TABLE_NAME, 
+				new String[] { KEY_DATE, doc },
+				KEY_DATE + "='"+date+"' AND "+ KEY_LANG + "='"+lang.toLowerCase()+"'", 
+				null, null, null, null, null);
+			
 			if (mCursor.getCount() < 1) {
 				mCursor.close();
 				return null;
@@ -151,5 +177,15 @@ public class DBHelper extends SQLiteOpenHelper {
 		
 
 	}
+	
+	public Cursor fetchLanguages() throws SQLException {
+		String q =  "SELECT DISTINCT id as _id, name FROM "+LANG_TABLE_NAME+" INNER JOIN "+TABLE_NAME+" on "+LANG_TABLE_NAME+".id = "+TABLE_NAME+".lang COLLATE NOCASE";
+		Cursor mCursor = myDataBase.rawQuery(q, null);
+		if (mCursor != null) {
+			mCursor.moveToFirst();
+		}
+		return mCursor;
+	}
+
 	
 }
