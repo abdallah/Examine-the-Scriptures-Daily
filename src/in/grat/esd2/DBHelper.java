@@ -40,14 +40,14 @@ public class DBHelper extends SQLiteOpenHelper {
     public DBHelper(Context context) {
     	super(context, DATABASE_NAME, null, 1);
         this.myContext = context;
-        String myPath = DATABASE_PATH + DATABASE_NAME;
+       /* String myPath = DATABASE_PATH + DATABASE_NAME;
         try {
 			createDataBase();
 			myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		} */
     }
  
     /**
@@ -125,6 +125,12 @@ public class DBHelper extends SQLiteOpenHelper {
  
 	@Override
 	public void onCreate(SQLiteDatabase db) {
+		try {
+			createDataBase();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		// db.execSQL("CREATE TABLE "+TABLE_NAME+" (_id integer primary key autoincrement, "+KEY_DATE+" TEXT, "+KEY_TEXT+" TEXT, "+KEY_REFS+" TEXT);");
 	}
 	public static List<String> GetColumns(SQLiteDatabase db, String tableName) {
@@ -154,6 +160,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
 	public String[] fetchText(String date, String type, String lang) {
 		String doc = type.equalsIgnoreCase("document") ? KEY_TEXT : KEY_REFS;
+		String[] results = null;
 		try {
 			Cursor mCursor = myDataBase.query(TABLE_NAME, 
 				new String[] { KEY_DATE, doc },
@@ -162,19 +169,17 @@ public class DBHelper extends SQLiteOpenHelper {
 			
 			if (mCursor.getCount() < 1) {
 				mCursor.close();
-				return null;
 			} else {
 				mCursor.moveToFirst();
-				String[] results = new String[] { mCursor.getString(mCursor
+				results = new String[] { mCursor.getString(mCursor
 						.getColumnIndex(doc)) };
 				mCursor.close();
-				return results;
 			}
+			
 		} catch (NullPointerException e) {
 			e.printStackTrace();
-			return null;
 		}
-		
+		return results;
 
 	}
 	

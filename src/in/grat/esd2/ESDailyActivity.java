@@ -38,6 +38,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -152,12 +153,18 @@ public class ESDailyActivity extends Activity {
         int zoomLevel = preferences.getInt("zoom", 150);
 		wv1.setOnTouchListener(gestureListener);
 		wv2.setOnTouchListener(gestureListener);
+		/*wv1.setLayerType(View.LAYER_TYPE_NONE, null);
+		wv2.setLayerType(View.LAYER_TYPE_NONE, null);*/
 		wv1.getSettings().setRenderPriority(RenderPriority.HIGH);
 		wv1.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
 		wv1.getSettings().setBuiltInZoomControls(true);
 		wv2.getSettings().setBuiltInZoomControls(true);
 		wv1.setInitialScale(zoomLevel);
 		wv2.setInitialScale(zoomLevel);
+		
+		/*String initialText = "<html><body><h1>Please wait while I load the database...</h1><body></html>";
+		wv1.loadData(initialText, "text/html", "UTF-8");
+		wv1.reload();*/
 		
         otherView = false;
 	}
@@ -170,6 +177,17 @@ public class ESDailyActivity extends Activity {
         RESTART_INTENT = PendingIntent.getActivity(this.getBaseContext(), 0, new Intent(getIntent()), getIntent().getFlags());
         initUI();
         gotoToday();
+    }
+    
+    @Override
+    protected void onDestroy() {
+    	super.onDestroy();
+        if (dbHelper != null) {
+        	dbHelper.close();
+        }
+        //if (cdh != null) {
+        //    cdh.close();
+        //}
     }
     
     @Override
@@ -355,9 +373,11 @@ public class ESDailyActivity extends Activity {
     		if (!otherView) {
     			wv1.loadDataWithBaseURL("file:///android_asset/", data[0], "text/html", "utf-8", null);
     			wv1.setWebViewClient(new WVC(currentDate, dbHelper));
+    			wv1.setBackgroundColor(Color.parseColor("#FFFFFFFF"));
     		} else {
     			wv2.loadDataWithBaseURL("file:///android_asset/", data[0], "text/html", "utf-8", null);
     			wv2.setWebViewClient(new WVC(currentDate, dbHelper));
+    			wv1.requestFocus();
     		}
     	} else { 
     		Toast.makeText(ctx, "Date not found!", 3000);
