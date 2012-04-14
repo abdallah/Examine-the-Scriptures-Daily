@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="themes">Select Theme</string>
+    <string-array name="themes_array">
+        <item>Normal</item>
+        <item>Inverted</item>
+    </string-array>
+</resources>

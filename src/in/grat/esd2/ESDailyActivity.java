@@ -6,11 +6,14 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -39,14 +42,27 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
+import android.text.method.ScrollingMovementMethod;
+import android.text.style.CharacterStyle;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
+import android.text.style.URLSpan;
+
+import android.util.FloatMath;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.ContextThemeWrapper;
@@ -54,8 +70,10 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.webkit.WebSettings;
@@ -64,46 +82,39 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.DatePicker;
 //import android.widget.TextSwitcher;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 
 public class ESDailyActivity extends Activity {
 	
-	private GestureDetector gestureDetector;
+	private GestureDetector m_GestureDetector;
+	private ScaleGestureDetector m_sGestureDetector;
+	private float mScaleFactor = 1.f;
+
 	View.OnTouchListener gestureListener;
 	Context ctx;
-	private Animation slideLeftIn;
-	private Animation slideLeftOut;
-	private Animation slideRightIn;
-    private Animation slideRightOut;
+	private Animation slideLeftIn, slideLeftOut, slideRightIn, slideRightOut;
     //private TextSwitcher textSwitcher;
     private ViewFlipper flipper;
-    public String lang;
+    public String mLang, mTheme;
     
 	//private Context context;
-	private int mYear;
-    private int mMonth;
-    private int mDay;
+	private int mYear, mMonth, mDay;
 
-	WebView wv1; 
-	WebView wv2;
+//	WebView wv1; 
+//	WebView wv2;
+	TextView tv1, tv2;
 	boolean otherView;
-	SimpleDateFormat dateFormat;
-	SimpleDateFormat displayFormat;
-	String today;
-	String currentDate;
-	String nextDate;
-	String prevDate;
-	String currentScripture;
+	SimpleDateFormat dateFormat, displayFormat;
+	String today, currentDate, nextDate, prevDate, currentScripture;
 	static final int DATE_DIALOG_ID=0;
 	
 	SharedPreferences preferences;
 	
 	ViewConfiguration vc;
-	int SWIPE_MIN_DISTANCE;
-	int SWIPE_MAX_OFF_PATH;
-	int SWIPE_THRESHOLD_VELOCITY;
+	int SWIPE_MIN_DISTANCE, SWIPE_MAX_OFF_PATH, SWIPE_THRESHOLD_VELOCITY;
 	
 	static ESDailyActivity ACTIVITY;
 	static PendingIntent RESTART_INTENT;
@@ -125,57 +136,70 @@ public class ESDailyActivity extends Activity {
         slideRightIn = AnimationUtils.loadAnimation(this, R.anim.slide_right_in);
         slideRightOut = AnimationUtils.loadAnimation(this, R.anim.slide_right_out);
         
-        gestureDetector = new GestureDetector(getApplicationContext(), new MyGestureDetector());
+        m_GestureDetector = new GestureDetector(getApplicationContext(), new MyGestureDetector());
+        m_sGestureDetector = new ScaleGestureDetector(getApplicationContext(), new ScaleListener());
+
         gestureListener = new View.OnTouchListener() {
             public boolean onTouch(View v, MotionEvent event) { 
             	int action = event.getAction();
             	Log.d("ESD", "Action: "+action);
-                return (gestureDetector.onTouchEvent(event) || v.onTouchEvent(event));
+                return (m_sGestureDetector.onTouchEvent(event) && m_GestureDetector.onTouchEvent(event) || v.onTouchEvent(event));
             }
         };
+        
         
         dbHelper = new DBHelper(getApplicationContext());
         dbHelper.openDataBase();
     	
         dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         displayFormat = new SimpleDateFormat("EEEE, MMMM d");
-        setContentView(R.layout.main);
-        flipper = (ViewFlipper) findViewById(R.id.flipper);
-        wv1 = (WebView) this.findViewById(R.id.webView1);
-        wv2 = (WebView) this.findViewById(R.id.webView2);
+        
+
         
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         if (getIntent().hasExtra("lang")) {
         	String widgetId = getIntent().getDataString().replaceAll(".*/(\\d+)", "$1");
-        	lang = preferences.getString(PREF_PREFIX_KEY + widgetId, null);
+        	mLang = preferences.getString(PREF_PREFIX_KEY + widgetId, null);
         }
-        if (lang==null) { lang = preferences.getString("lang", "e"); }
-        int zoomLevel = preferences.getInt("zoom", 150);
-		wv1.setOnTouchListener(gestureListener);
-		wv2.setOnTouchListener(gestureListener);
-		/*wv1.setLayerType(View.LAYER_TYPE_NONE, null);
-		wv2.setLayerType(View.LAYER_TYPE_NONE, null);*/
-		wv1.getSettings().setRenderPriority(RenderPriority.HIGH);
-		wv1.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
-		wv1.getSettings().setBuiltInZoomControls(true);
-		wv2.getSettings().setBuiltInZoomControls(true);
-		wv1.setInitialScale(zoomLevel);
-		wv2.setInitialScale(zoomLevel);
+        if (mLang==null) { mLang = preferences.getString("lang", "e"); }
+        mTheme = preferences.getString("theme", "normal");
+        if (mTheme.equalsIgnoreCase("normal")) { 
+        	//this.setTheme(android.R.style.Theme_NoTitleBar);
+        } else if (mTheme.equalsIgnoreCase("inverted")) { 
+        	this.setTheme(android.R.style.Theme_Black_NoTitleBar);
+        }
+
+        setContentView(R.layout.main);
+        flipper = (ViewFlipper) findViewById(R.id.flipper);
+
+        tv1 = (TextView) this.findViewById(R.id.tvDisplay1);
+        tv2 = (TextView) this.findViewById(R.id.tvDisplay2);
+        float zoomLevel = 12.0f;
+        try {
+        	 zoomLevel = preferences.getFloat("zoom", 12.0f);
+        	 preferences.edit().putFloat("zoom", zoomLevel).commit();
+        } catch (Exception e) {
+        	Log.e("ESD11", e.getMessage());
+        }
+        tv1.setTextSize(zoomLevel);  
+        tv2.setTextSize(zoomLevel);
+        
+        tv1.setMovementMethod(new LinkMovementMethod());
+        tv2.setMovementMethod(LinkMovementMethod.getInstance());
+		tv1.setOnTouchListener(gestureListener);
+		tv2.setOnTouchListener(gestureListener);
 		
-		/*String initialText = "<html><body><h1>Please wait while I load the database...</h1><body></html>";
-		wv1.loadData(initialText, "text/html", "UTF-8");
-		wv1.reload();*/
-		
-        otherView = false;
+		otherView = false;
 	}
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         ACTIVITY = this;
         ctx = this;
         RESTART_INTENT = PendingIntent.getActivity(this.getBaseContext(), 0, new Intent(getIntent()), getIntent().getFlags());
         initUI();
+        super.onCreate(savedInstanceState);
+
         gotoToday();
     }
     
@@ -227,7 +251,7 @@ public class ESDailyActivity extends Activity {
 			intent.putExtra(FilePickerActivity.EXTRA_FILE_PATH, "/sdcard/download");
 			startActivityForResult(intent, REQUEST_PICK_FILE);
 			return true;
-        case R.id.mnuPrefs:
+        case R.id.mnuPrefs: 
         	Intent p = new Intent(ESDailyActivity.this, PrefsActivity.class);
 			startActivityForResult(p, REQUEST_PREFERENCES);
         default:
@@ -250,6 +274,12 @@ public class ESDailyActivity extends Activity {
 				}
 				break;
 			case REQUEST_PREFERENCES:
+				preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		        String newTheme = preferences.getString("theme", "normal");
+		        String newLang = preferences.getString("lang", mLang);
+		        if (!newTheme.equalsIgnoreCase(mTheme) || !newLang.equalsIgnoreCase(mLang)) { 
+		        	restartApp();
+		        }
 				break;
 			}
 		}
@@ -309,16 +339,36 @@ public class ESDailyActivity extends Activity {
 		}
 
     }
-    
+   
+
+
+	class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+	    @Override
+	    public boolean onScale(ScaleGestureDetector detector) {
+	        mScaleFactor *= detector.getScaleFactor();
+	        
+	        // Don't let the object get too small or too large.
+	        mScaleFactor = Math.max(8.0f, Math.min(mScaleFactor, 25.0f));
+	        if (mScaleFactor > 1) {
+	        	Log.d("ESD2", "Zooming in, enlarge font");
+	        } else { 
+	        	Log.d("ESD2", "Zooming out, zagher");
+	        }
+	        tv1.setTextSize(mScaleFactor);
+	        tv2.setTextSize(mScaleFactor);
+	        
+	    	preferences = PreferenceManager.getDefaultSharedPreferences(ctx);
+	    	float zoomLevel = mScaleFactor;
+	    	Log.d("ESD2", "ZoomLevel: "+zoomLevel);
+	        preferences.edit().putFloat("zoom", zoomLevel).commit();
+
+	        return true;
+	    }
+	}
+	
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-    	preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        float zoomLevel = (otherView)? wv2.getScale()*100 : wv1.getScale()*100;
-        preferences.edit().putInt("zoom", (int) zoomLevel).commit();
-        if (gestureDetector.onTouchEvent(event))
-	        return true;
-	    else
-	    	return false;
+    	return m_sGestureDetector.onTouchEvent(event) && m_GestureDetector.onTouchEvent(event);
     }
     
     @Override
@@ -367,22 +417,40 @@ public class ESDailyActivity extends Activity {
     }
     
     public void fetchText(String date) {
-    	String[] data = dbHelper.fetchText(date, "document", this.lang);
+    	String[] data = dbHelper.fetchText(date, "document", this.mLang);
     	if (data!=null) {
     		currentScripture = data[0];
+    		String text = data[0].replaceAll("<p class=\"st\">.*</p>", "");
+    		text = text.replaceAll("(?s)<title>.*</title>", "");
+    		text = text.replaceAll("<p class=\"ss\">(.*)</p>", "<p class=\"ss\"><b>$1</b></p>");
+    		text = text.replace("href=\"", "href=\"http://");
     		if (!otherView) {
-    			wv1.loadDataWithBaseURL("file:///android_asset/", data[0], "text/html", "utf-8", null);
-    			wv1.setWebViewClient(new WVC(currentDate, dbHelper));
-    			wv1.setBackgroundColor(Color.parseColor("#FFFFFFFF"));
+    			tv1.setText(rearrangeSpans(text));
     		} else {
-    			wv2.loadDataWithBaseURL("file:///android_asset/", data[0], "text/html", "utf-8", null);
-    			wv2.setWebViewClient(new WVC(currentDate, dbHelper));
-    			wv1.requestFocus();
+    			tv2.setText(rearrangeSpans(text));
     		}
     	} else { 
     		Toast.makeText(ctx, "Date not found!", 3000);
     		Log.d("ESD", "found nothing!" ); 
     	}
+    }
+    
+    private Spannable rearrangeSpans(String text) {
+    	Spannable sText = (Spannable) Html.fromHtml(text);
+    	int foreColor = tv1.getTextColors().getDefaultColor();
+    	
+    	URLSpan[] spans = sText.getSpans(0, sText.length(), URLSpan.class);
+    	for (URLSpan span : spans) {
+    	    int x = sText.getSpanStart(span);
+    	    int y = sText.getSpanEnd(span);
+    	    int flags = sText.getSpanFlags(span);
+    	    String url = span.getURL();
+    	    sText.removeSpan(span);
+    	    InternalURLSpan iurlSpan = new InternalURLSpan(url);
+       	    sText.setSpan(iurlSpan, x, y, flags);
+       	    sText.setSpan(new ForegroundColorSpan(foreColor), x, y, flags);
+    	}
+    	return sText;
     }
     
     private void setDates(String date) { 
@@ -409,7 +477,76 @@ public class ESDailyActivity extends Activity {
     	setDates(today);
     }
     
-    private class WVC extends WebViewClient {
+    class InternalURLSpan extends ClickableSpan {  
+        OnClickListener mListener;
+        Uri mUri;
+    	String mFragment;
+    	
+
+        public InternalURLSpan(String Url) {
+        	this.mUri = Uri.parse(Url);
+	    	this.mFragment = this.mUri.getFragment();
+
+        }
+
+		@Override  
+        public void onClick(View widget) {  
+			DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+	    	builderFactory.setNamespaceAware(true);
+	    	String msg = "";
+	    	
+	    	DocumentBuilder builder;
+			try {
+				builder = builderFactory.newDocumentBuilder();
+				String[] refDoc = dbHelper.fetchText(currentDate, "references", mLang);
+				Document document = builder.parse(new ByteArrayInputStream(refDoc[0].getBytes()));
+				TransformerFactory transFactory = TransformerFactory.newInstance();
+				Transformer transformer = transFactory.newTransformer();
+				StringWriter buffer = new StringWriter();
+				transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+				
+				Node node = document.getElementById(this.mFragment).getParentNode();
+				if (this.mFragment.startsWith("pcitation")==true) {
+					for(Node cNode=node.getParentNode();
+						    cNode!=null; cNode=cNode.getNextSibling()){
+						transformer.transform(new DOMSource(cNode), new StreamResult(buffer));
+					}
+					msg += buffer.toString();
+		
+				} else { 
+					transformer.transform(new DOMSource(node), new StreamResult(buffer));
+					msg = buffer.toString();
+				}
+
+				Log.d("epublib", "Element: "+msg);
+				msg = msg.replace("^", "")
+						.replace("***", "");
+				
+				AlertDialog.Builder dbld = new AlertDialog.Builder(
+						new ContextThemeWrapper(ESDailyActivity.this, R.style.AlertDialogCustom));
+				dbld.setMessage(Html.fromHtml(msg))
+					.setCancelable(true);
+				AlertDialog alert = dbld.create();
+				
+				alert.show();
+				//Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+			} catch (ParserConfigurationException e) {
+				e.printStackTrace();
+			} catch (SAXException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}  catch (NullPointerException e) {
+				e.printStackTrace();
+			} catch (TransformerConfigurationException e) {
+				e.printStackTrace();
+			} catch (TransformerException e) {
+				e.printStackTrace();
+			}
+        }  
+    }  
+    
+/*    private class WVC extends WebViewClient {
     	String currentDate;
     	DBHelper dbHelper;
     	
@@ -479,7 +616,7 @@ public class ESDailyActivity extends Activity {
 	        return true;
 	    }
 	}
-
+*/
 	
    
 }

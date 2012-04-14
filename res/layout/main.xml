@@ -8,10 +8,11 @@
 	    android:layout_height="fill_parent"
 	    android:scrollbars="vertical"
 	    android:isScrollContainer="true" 
-	    android:layout_marginLeft="20px" 
-	    android:layout_marginRight="20px" 
+	    android:layout_marginLeft="20dp" 
+	    android:layout_marginRight="20dp" 
 	    android:layout_gravity="center_horizontal">
-		<WebView android:layout_width="match_parent" android:id="@+id/webView1" android:layout_height="match_parent"></WebView>
+	    <TextView android:id="@+id/tvDisplay1" android:layout_width="match_parent" android:layout_height="match_parent" android:bufferType="spannable"></TextView> 
+<!-- 		<WebView android:layout_width="match_parent" android:id="@+id/webView1" android:layout_height="match_parent"></WebView> -->
     </LinearLayout>
     
     <LinearLayout 
@@ -19,7 +20,12 @@
 	    android:layout_width="fill_parent"
 	    android:layout_height="fill_parent"
 	    android:scrollbars="vertical"
-	    android:isScrollContainer="true" android:layout_marginLeft="20px" android:layout_marginRight="20px" android:layout_gravity="center_horizontal">
-        <WebView android:id="@+id/webView2" android:layout_width="match_parent" android:layout_height="match_parent"></WebView>
+	    android:isScrollContainer="true" android:layout_marginLeft="20dp" android:layout_marginRight="20dp" android:layout_gravity="center_horizontal">
+		<TextView android:id="@+id/tvDisplay2" 
+		    
+		    android:layout_width="match_parent" 
+		    android:layout_height="match_parent" 
+		    android:bufferType="spannable"></TextView> 
+<!--         <WebView android:id="@+id/webView2" android:layout_width="match_parent" android:layout_height="match_parent"></WebView> -->
     </LinearLayout>
 </ViewFlipper>

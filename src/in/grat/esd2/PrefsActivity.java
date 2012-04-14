@@ -4,12 +4,14 @@ package in.grat.esd2;
 import in.grat.esd2.R;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
@@ -19,7 +21,7 @@ import android.widget.Toast;
 
 public class PrefsActivity extends Activity {
 	DBHelper dbhelper; 
-	Spinner mLang;
+	Spinner mLang, mTheme;
 	SharedPreferences preferences;
 	
 	// TimePreference alarmTime;
@@ -29,6 +31,7 @@ public class PrefsActivity extends Activity {
 	    Context context = getApplicationContext();
 	    preferences = PreferenceManager.getDefaultSharedPreferences(context);
 	    String langId = preferences.getString("lang", "e");
+	    String themeId = preferences.getString("theme", "normal");
 	    
 	    dbhelper = new DBHelper(getBaseContext()); 
         try {
@@ -40,16 +43,27 @@ public class PrefsActivity extends Activity {
         startManagingCursor(cursor);
         
         mLang = (Spinner)findViewById(R.id.sp_language);
-        SimpleCursorAdapter adapter = new SimpleCursorAdapter(this, R.layout.language_list_item, cursor, 
+        SimpleCursorAdapter langAdapter = new SimpleCursorAdapter(this, R.layout.language_list_item, cursor, 
         		new String[]{"_id", "name"}, 
         		new int[]{R.id.language_id, R.id.language_name}
         		);
-        mLang.setAdapter(adapter);
+        mLang.setAdapter(langAdapter);
         for (int i=0; i<mLang.getCount(); i++) {
         	Cursor v = (Cursor) mLang.getItemAtPosition(i);
         	String lId = v.getString(v.getColumnIndex("_id"));
         	if (lId.equalsIgnoreCase(langId)) { 
         		mLang.setSelection(i); break;
+        	}
+        }
+        mTheme = (Spinner) findViewById(R.id.sp_theme);
+        ArrayAdapter<CharSequence> themeAdapter = ArrayAdapter.createFromResource(
+                this, R.array.themes_array, android.R.layout.simple_spinner_item);
+        themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mTheme.setAdapter(themeAdapter);
+        for (int i=0; i<mTheme.getCount(); i++) {
+        	String tId = (String) mTheme.getItemAtPosition(i);
+        	if (tId.equalsIgnoreCase(themeId)) {
+        		mTheme.setSelection(i);
         	}
         }
 
@@ -58,6 +72,8 @@ public class PrefsActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				savePreferences();
+				Intent extra = new Intent();
+				setResult(RESULT_OK, extra);
 				finish();
 			}
 		});
@@ -66,9 +82,14 @@ public class PrefsActivity extends Activity {
 	
 	public void savePreferences() { 
 		SharedPreferences.Editor prefs = preferences.edit();
+		
 		TextView tvId = (TextView) mLang.getSelectedView().findViewById(R.id.language_id);
 		String lId = tvId.getText().toString();
 		prefs.putString("lang", lId);
+		
+		String sTheme = (String) mTheme.getSelectedItem();
+		prefs.putString("theme", sTheme);
+		
 		prefs.commit();
 		Toast.makeText(this, "Saved", 1000);
 	}

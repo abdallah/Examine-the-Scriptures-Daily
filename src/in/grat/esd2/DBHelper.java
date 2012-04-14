@@ -40,14 +40,14 @@ public class DBHelper extends SQLiteOpenHelper {
     public DBHelper(Context context) {
     	super(context, DATABASE_NAME, null, 1);
         this.myContext = context;
-       /* String myPath = DATABASE_PATH + DATABASE_NAME;
+        String myPath = DATABASE_PATH + DATABASE_NAME;
         try {
 			createDataBase();
 			myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} */
+		} 
     }
  
     /**

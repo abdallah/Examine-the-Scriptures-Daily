@@ -2,5 +2,6 @@
 <resources>
     <string name="hello">Hello World, ESDailyActivity!</string>
     <string name="app_name">Examine Scriptures Daily</string>
-    <string name="ellipsis">...</string>
+    <string name="ellipsis">&#8230;</string>
+    <string name="save">Save</string>
 </resources>
