@@ -4,9 +4,28 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -27,10 +46,11 @@ public class DBHelper extends SQLiteOpenHelper {
     static final String KEY_REFS = "refs";
     static final String KEY_LANG = "lang";
 	
-    private static final String DATABASE_PATH = "/data/data/in.grat.esd2/databases/";
-	    
+    String mPath;	    
 	private SQLiteDatabase myDataBase; 
 	private final Context myContext;
+	private VerseParts mVerseParts;
+	public boolean PartsExtractedOK;
 	 
     /**
      * Constructor
@@ -40,10 +60,10 @@ public class DBHelper extends SQLiteOpenHelper {
     public DBHelper(Context context) {
     	super(context, DATABASE_NAME, null, 1);
         this.myContext = context;
-        String myPath = DATABASE_PATH + DATABASE_NAME;
+        mPath = "/data/data/in.grat.esd2/databases/esd";
         try {
 			createDataBase();
-			myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+			myDataBase = SQLiteDatabase.openDatabase(mPath, null, SQLiteDatabase.OPEN_READONLY);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -74,8 +94,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private boolean checkDataBase(){
     	SQLiteDatabase checkDB = null;
     	try{
-    		String myPath = DATABASE_PATH + DATABASE_NAME;
-    		checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+    		checkDB = SQLiteDatabase.openDatabase(mPath, null, SQLiteDatabase.OPEN_READONLY);
  
     	} catch (SQLiteException e){
     		//database does't exist yet. 
@@ -92,12 +111,8 @@ public class DBHelper extends SQLiteOpenHelper {
      * This is done by transfering bytestream.
      * */
     private void copyDataBase() throws IOException{
-    	//Open your local db as the input stream
     	InputStream myInput = myContext.getAssets().open(DATABASE_NAME);
-    	// Path to the just created empty db
-    	String outFileName = DATABASE_PATH + DATABASE_NAME;
-    	//Open the empty db as the output stream
-    	OutputStream myOutput = new FileOutputStream(outFileName);
+    	OutputStream myOutput = new FileOutputStream(mPath);
     	//transfer bytes from the inputfile to the outputfile
     	byte[] buffer = new byte[1024];
     	int length;
@@ -110,12 +125,14 @@ public class DBHelper extends SQLiteOpenHelper {
     	myInput.close();
     }
  
-    public void openDataBase() throws SQLException{
-    	//Open the database
-        String myPath = DATABASE_PATH + DATABASE_NAME;
-    	myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
-    }
+//    public void openDataBase() throws SQLException{
+//    	//Open the database
+//        String myPath = DATABASE_PATH + DATABASE_NAME;
+//    	myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+//    }
  
+
+    
     @Override
 	public synchronized void close() {
     	if(myDataBase != null)
@@ -125,12 +142,8 @@ public class DBHelper extends SQLiteOpenHelper {
  
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		try {
-			createDataBase();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		mPath = db.getPath();
+		
 		// db.execSQL("CREATE TABLE "+TABLE_NAME+" (_id integer primary key autoincrement, "+KEY_DATE+" TEXT, "+KEY_TEXT+" TEXT, "+KEY_REFS+" TEXT);");
 	}
 	public static List<String> GetColumns(SQLiteDatabase db, String tableName) {
@@ -173,6 +186,7 @@ public class DBHelper extends SQLiteOpenHelper {
 				mCursor.moveToFirst();
 				results = new String[] { mCursor.getString(mCursor
 						.getColumnIndex(doc)) };
+				mVerseParts = extractParts(results[0]);
 				mCursor.close();
 			}
 			
@@ -183,6 +197,71 @@ public class DBHelper extends SQLiteOpenHelper {
 
 	}
 	
+	
+	public class VerseParts { 
+		public String date, verse, text;
+		public VerseParts(String date, String verse, String text) {
+			this.date = date;
+			this.verse = verse;
+			this.text = text;
+		}
+	}
+	
+	public VerseParts getVerseParts(String date, String type, String lang) {
+		PartsExtractedOK = false;
+		fetchText(date, type, lang);
+		return mVerseParts;
+	}
+	
+	public VerseParts extractParts(String doc) {
+		DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+    	builderFactory.setNamespaceAware(true);
+    	InputSource inStream = new InputSource();
+    	String sVerse = "verse not found";
+    	String sDate = "unidentified date";
+    	String sText = "text not found";
+    	DocumentBuilder builder;
+		try {
+			inStream.setCharacterStream(new StringReader(doc));
+			builder = builderFactory.newDocumentBuilder();
+			Document document = builder.parse(inStream);
+			NodeList nodes = document.getElementsByTagName("p");
+			for (int i=0; i<nodes.getLength(); i++) {
+				Node cls = nodes.item(i).getAttributes().getNamedItem("class");
+				if ( cls != null ) {
+					TransformerFactory transFactory = TransformerFactory.newInstance();
+					Transformer transformer = transFactory.newTransformer();
+					StringWriter buffer = new StringWriter();
+					transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+					transformer.transform(new DOMSource(nodes.item(i)), new StreamResult(buffer));
+					if (cls.getNodeValue().equalsIgnoreCase("sa")) { 
+						sVerse = buffer.toString();
+					} else if (cls.getNodeValue().equalsIgnoreCase("ss")) { 
+						sDate = buffer.toString();
+					} else if (cls.getNodeValue().equalsIgnoreCase("sb")) {
+						sText = buffer.toString();
+					}
+					
+ 				}
+			}
+			PartsExtractedOK = true;
+			return new VerseParts(sDate, sVerse, sText);
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (TransformerConfigurationException e) {
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			e.printStackTrace();
+		}
+		return null;
+			
+	}
+	
+
 	public Cursor fetchLanguages() throws SQLException {
 		String q =  "SELECT DISTINCT id as _id, name FROM "+LANG_TABLE_NAME+" INNER JOIN "+TABLE_NAME+" on "+LANG_TABLE_NAME+".id = "+TABLE_NAME+".lang COLLATE NOCASE";
 		Cursor mCursor = myDataBase.rawQuery(q, null);

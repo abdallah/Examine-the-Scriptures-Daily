@@ -11,8 +11,24 @@
 	    android:layout_marginLeft="20dp" 
 	    android:layout_marginRight="20dp" 
 	    android:layout_gravity="center_horizontal">
-	    <TextView android:id="@+id/tvDisplay1" android:layout_width="match_parent" android:layout_height="match_parent" android:bufferType="spannable"></TextView> 
-<!-- 		<WebView android:layout_width="match_parent" android:id="@+id/webView1" android:layout_height="match_parent"></WebView> -->
+	    <TextView
+        android:id="@+id/tvDate1"
+        android:typeface="serif"
+		android:textStyle="bold"
+		android:gravity="center"
+		android:layout_margin="4dp"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+	    <TextView
+        android:id="@+id/tvVerse1"
+        android:gravity="center_horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+	    <TextView android:id="@+id/tvDisplay1" 
+	        
+	        android:layout_width="match_parent" 
+	        android:layout_height="match_parent" 
+	        android:bufferType="spannable"></TextView> 
     </LinearLayout>
     
     <LinearLayout 
@@ -21,11 +37,25 @@
 	    android:layout_height="fill_parent"
 	    android:scrollbars="vertical"
 	    android:isScrollContainer="true" android:layout_marginLeft="20dp" android:layout_marginRight="20dp" android:layout_gravity="center_horizontal">
+		<TextView
+        android:id="@+id/tvDate2"
+        android:typeface="serif"
+		android:textStyle="bold"
+		android:gravity="center"
+		android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+		<TextView
+        android:id="@+id/tvVerse2"
+        android:gravity="center_horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
 		<TextView android:id="@+id/tvDisplay2" 
-		    
+
 		    android:layout_width="match_parent" 
 		    android:layout_height="match_parent" 
 		    android:bufferType="spannable"></TextView> 
-<!--         <WebView android:id="@+id/webView2" android:layout_width="match_parent" android:layout_height="match_parent"></WebView> -->
     </LinearLayout>
+
+    
+
 </ViewFlipper>

@@ -105,7 +105,7 @@ public class ESDailyActivity extends Activity {
 
 //	WebView wv1; 
 //	WebView wv2;
-	TextView tv1, tv2;
+	TextView tv1, tv2, tvVerse1, tvVerse2, tvDate1, tvDate2;
 	boolean otherView;
 	SimpleDateFormat dateFormat, displayFormat;
 	String today, currentDate, nextDate, prevDate, currentScripture;
@@ -149,7 +149,6 @@ public class ESDailyActivity extends Activity {
         
         
         dbHelper = new DBHelper(getApplicationContext());
-        dbHelper.openDataBase();
     	
         dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         displayFormat = new SimpleDateFormat("EEEE, MMMM d");
@@ -171,7 +170,11 @@ public class ESDailyActivity extends Activity {
 
         setContentView(R.layout.main);
         flipper = (ViewFlipper) findViewById(R.id.flipper);
-
+        
+        tvVerse1 = (TextView) this.findViewById(R.id.tvVerse1);
+        tvVerse2 = (TextView) this.findViewById(R.id.tvVerse2);
+        tvDate1 = (TextView) this.findViewById(R.id.tvDate1);
+        tvDate2 = (TextView) this.findViewById(R.id.tvDate2);
         tv1 = (TextView) this.findViewById(R.id.tvDisplay1);
         tv2 = (TextView) this.findViewById(R.id.tvDisplay2);
         float zoomLevel = 12.0f;
@@ -181,14 +184,16 @@ public class ESDailyActivity extends Activity {
         } catch (Exception e) {
         	Log.e("ESD11", e.getMessage());
         }
-        tv1.setTextSize(zoomLevel);  
-        tv2.setTextSize(zoomLevel);
-        
-        tv1.setMovementMethod(new LinkMovementMethod());
-        tv2.setMovementMethod(LinkMovementMethod.getInstance());
-		tv1.setOnTouchListener(gestureListener);
-		tv2.setOnTouchListener(gestureListener);
-		
+        TextView[] tvs = { tv1, tv2, tvVerse1, tvVerse2, tvDate1, tvDate2 };
+        for (TextView tv : tvs) {
+        	if (tv == tvDate1 || tv == tvDate2) {
+        		tv.setTextSize(zoomLevel+2);
+        	} else {
+        		tv.setTextSize(zoomLevel);
+        	}
+        	tv.setMovementMethod(LinkMovementMethod.getInstance());
+        	tv.setOnTouchListener(gestureListener);
+        }
 		otherView = false;
 	}
 	/** Called when the activity is first created. */
@@ -209,9 +214,6 @@ public class ESDailyActivity extends Activity {
         if (dbHelper != null) {
         	dbHelper.close();
         }
-        //if (cdh != null) {
-        //    cdh.close();
-        //}
     }
     
     @Override
@@ -400,6 +402,7 @@ public class ESDailyActivity extends Activity {
         };
 
     public Intent createShareIntent() { 
+    	// TODO: fix shared
     	Spanned text = Html.fromHtml(currentScripture);
     	StringBuilder sb = new StringBuilder(text.toString());
     	Intent intent = new Intent(Intent.ACTION_SEND);
@@ -417,17 +420,24 @@ public class ESDailyActivity extends Activity {
     }
     
     public void fetchText(String date) {
-    	String[] data = dbHelper.fetchText(date, "document", this.mLang);
-    	if (data!=null) {
-    		currentScripture = data[0];
-    		String text = data[0].replaceAll("<p class=\"st\">.*</p>", "");
-    		text = text.replaceAll("(?s)<title>.*</title>", "");
-    		text = text.replaceAll("<p class=\"ss\">(.*)</p>", "<p class=\"ss\"><b>$1</b></p>");
-    		text = text.replace("href=\"", "href=\"http://");
+//    	String[] data = dbHelper.fetchText(date, "document", this.mLang);
+    	DBHelper.VerseParts vp = dbHelper.getVerseParts(date, "document", mLang);
+    	
+    	if (dbHelper.PartsExtractedOK) {
+//    	if (data!=null) {
+//    		currentScripture = data[0];
+//    		String text = data[0].replaceAll("<p class=\"st\">.*</p>", "");
+//    		text = text.replaceAll("(?s)<title>.*</title>", "");
+//    		text = text.replaceAll("<p class=\"ss\">(.*)</p>", "<p class=\"ss\"><b>$1</b></p>");
+//    		text = text.replace("href=\"", "href=\"http://");
     		if (!otherView) {
-    			tv1.setText(rearrangeSpans(text));
+    			tvDate1.setText(Html.fromHtml(vp.date).toString().trim());
+    			tvVerse1.setText(rearrangeSpans(vp.verse));
+    			tv1.setText(rearrangeSpans(vp.text));
     		} else {
-    			tv2.setText(rearrangeSpans(text));
+    			tvDate2.setText(Html.fromHtml(vp.date).toString().trim());
+    			tvVerse2.setText(rearrangeSpans(vp.verse));
+    			tv2.setText(rearrangeSpans(vp.text));
     		}
     	} else { 
     		Toast.makeText(ctx, "Date not found!", 3000);

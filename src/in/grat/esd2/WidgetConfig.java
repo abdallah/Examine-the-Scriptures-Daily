@@ -51,11 +51,11 @@ public class WidgetConfig extends Activity {
         }
         
         dbhelper = new DBHelper(getBaseContext()); 
-        try {
-        	dbhelper.openDataBase();
-	 	} catch(SQLException sqle){
-	 		throw sqle;
-	 	}
+//        try {
+//        	dbhelper.openDataBase();
+//	 	} catch(SQLException sqle){
+//	 		throw sqle;
+//	 	}
         Cursor cursor = dbhelper.fetchLanguages();
         startManagingCursor(cursor);
         mLang = (Spinner)findViewById(R.id.spin_lang);

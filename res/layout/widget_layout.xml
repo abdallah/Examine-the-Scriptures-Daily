@@ -5,7 +5,7 @@
 	android:background="@drawable/shape"
 	android:orientation="vertical">
 	<TextView android:layout_margin="2dip" 
-		android:layout_marginBottom="2px" android:text="Date 00, 2011"
+		android:layout_marginBottom="2dp" android:text="Date 00, 2011"
 		android:id="@+id/tvTodaysDate" android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:textColor="#FF000000" 
@@ -15,12 +15,15 @@
 		android:textSize="18sp"
 		android:layout_gravity="center"></TextView>	
 	<Button
-	 	android:layout_width="match_parent"
+	 	android:layout_width="wrap_content"
 	 	android:layout_gravity="center"
-		android:layout_height="3dip"
+		android:layout_height="1dp"
+		android:text="________________________________________________"
 		android:background="#FF000000" ></Button>>
-	<TextView android:layout_margin="2dip" android:text="Static Text"
-		android:id="@+id/tvTodaysText" android:layout_width="match_parent"
+	<TextView android:layout_margin="2dp" android:text="Static Text"
+		android:id="@+id/tvTodaysText" android:layout_width="fill_parent"
+		android:paddingRight="3dp"
+		android:paddingLeft="3dp"
 		android:layout_height="wrap_content"
 		android:height="150dip"
 		android:gravity="center"

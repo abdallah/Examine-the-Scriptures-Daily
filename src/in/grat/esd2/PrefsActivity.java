@@ -34,11 +34,11 @@ public class PrefsActivity extends Activity {
 	    String themeId = preferences.getString("theme", "normal");
 	    
 	    dbhelper = new DBHelper(getBaseContext()); 
-        try {
-        	dbhelper.openDataBase();
-	 	} catch(SQLException sqle){
-	 		throw sqle;
-	 	}
+//        try {
+//        	dbhelper.openDataBase();
+//	 	} catch(SQLException sqle){
+//	 		throw sqle;
+//	 	}
         Cursor cursor = dbhelper.fetchLanguages();
         startManagingCursor(cursor);
         
