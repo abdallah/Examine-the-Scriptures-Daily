@@ -6,14 +6,11 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -41,8 +38,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,19 +45,14 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.text.Html;
 import android.text.Spannable;
-import android.text.SpannableString;
+
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
-import android.text.method.ScrollingMovementMethod;
-import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
-import android.text.style.StyleSpan;
 import android.text.style.URLSpan;
 
-import android.util.FloatMath;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.ContextThemeWrapper;
@@ -76,10 +66,6 @@ import android.view.ViewConfiguration;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.webkit.WebSettings;
-import android.webkit.WebSettings.RenderPriority;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.DatePicker;
 //import android.widget.TextSwitcher;
 import android.widget.TextView;
@@ -177,9 +163,9 @@ public class ESDailyActivity extends Activity {
         tvDate2 = (TextView) this.findViewById(R.id.tvDate2);
         tv1 = (TextView) this.findViewById(R.id.tvDisplay1);
         tv2 = (TextView) this.findViewById(R.id.tvDisplay2);
-        float zoomLevel = 12.0f;
+        float zoomLevel = 16.0f;
         try {
-        	 zoomLevel = preferences.getFloat("zoom", 12.0f);
+        	 zoomLevel = preferences.getFloat("zoom", 16.0f);
         	 preferences.edit().putFloat("zoom", zoomLevel).commit();
         } catch (Exception e) {
         	Log.e("ESD11", e.getMessage());
@@ -351,13 +337,21 @@ public class ESDailyActivity extends Activity {
 	        
 	        // Don't let the object get too small or too large.
 	        mScaleFactor = Math.max(8.0f, Math.min(mScaleFactor, 25.0f));
-	        if (mScaleFactor > 1) {
-	        	Log.d("ESD2", "Zooming in, enlarge font");
-	        } else { 
-	        	Log.d("ESD2", "Zooming out, zagher");
+//	        if (mScaleFactor > 1) {
+//	        	Log.d("ESD2", "Zooming in, enlarge font");
+//	        } else { 
+//	        	Log.d("ESD2", "Zooming out, zagher");
+//	        }
+	        TextView[] tvs = { tv1, tv2, tvVerse1, tvVerse2, tvDate1, tvDate2 };
+	        for (TextView tv : tvs) {
+	        	if (tv == tvDate1 || tv == tvDate2) {
+	        		tv.setTextSize(mScaleFactor+2);
+	        	} else {
+	        		tv.setTextSize(mScaleFactor);
+	        	}
+	        	tv.setMovementMethod(LinkMovementMethod.getInstance());
+	        	tv.setOnTouchListener(gestureListener);
 	        }
-	        tv1.setTextSize(mScaleFactor);
-	        tv2.setTextSize(mScaleFactor);
 	        
 	    	preferences = PreferenceManager.getDefaultSharedPreferences(ctx);
 	    	float zoomLevel = mScaleFactor;
@@ -401,13 +395,10 @@ public class ESDailyActivity extends Activity {
             }
         };
 
-    public Intent createShareIntent() { 
-    	// TODO: fix shared
-    	Spanned text = Html.fromHtml(currentScripture);
-    	StringBuilder sb = new StringBuilder(text.toString());
+    public Intent createShareIntent() {     	
     	Intent intent = new Intent(Intent.ACTION_SEND);
     	intent.putExtra(Intent.EXTRA_SUBJECT, "Today's Daily Scripture");
-    	intent.putExtra(Intent.EXTRA_TEXT, sb.toString());
+    	intent.putExtra(Intent.EXTRA_TEXT, currentScripture);
     	
     	intent.setType("text/plain");
     	return intent;
@@ -424,12 +415,9 @@ public class ESDailyActivity extends Activity {
     	DBHelper.VerseParts vp = dbHelper.getVerseParts(date, "document", mLang);
     	
     	if (dbHelper.PartsExtractedOK) {
-//    	if (data!=null) {
-//    		currentScripture = data[0];
-//    		String text = data[0].replaceAll("<p class=\"st\">.*</p>", "");
-//    		text = text.replaceAll("(?s)<title>.*</title>", "");
-//    		text = text.replaceAll("<p class=\"ss\">(.*)</p>", "<p class=\"ss\"><b>$1</b></p>");
-//    		text = text.replace("href=\"", "href=\"http://");
+    		StringBuilder sb = new StringBuilder(Html.fromHtml(vp.verse).toString());
+    		sb.append(Html.fromHtml(vp.text).toString());
+    		currentScripture = sb.toString();
     		if (!otherView) {
     			tvDate1.setText(Html.fromHtml(vp.date).toString().trim());
     			tvVerse1.setText(rearrangeSpans(vp.verse));
