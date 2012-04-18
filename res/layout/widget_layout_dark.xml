@@ -2,13 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent" android:layout_height="match_parent"
 	android:layout_margin="8dip" 
-	android:background="@drawable/shape"
+	android:background="@drawable/shape_dark"
 	android:orientation="vertical">
 	<TextView android:layout_margin="2dip" 
 		android:layout_marginBottom="2dp" android:text="Date 00, 2011"
 		android:id="@+id/tvTodaysDate" android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:textColor="#FF000000" 
+		android:textColor="#FFFFFFFF" 
 		android:typeface="serif"
 		android:textStyle="bold"
 		android:gravity="center"
@@ -19,7 +19,7 @@
 	 	android:layout_gravity="center"
 		android:layout_height="1dp"
 		android:text="________________________________________________"
-		android:background="#FF000000" ></Button>>
+		android:background="#FFFFFFFF" ></Button>>
 	<TextView android:layout_margin="2dp" android:text="Please wait while loading the text..."
 		android:id="@+id/tvTodaysText" android:layout_width="fill_parent"
 		android:paddingRight="3dp"
@@ -28,7 +28,7 @@
 		android:height="150dip"
 		android:gravity="center"
 		android:typeface="sans" android:textStyle="italic"
-		android:textSize="16sp" android:textColor="#FF000000"
+		android:textSize="16sp" android:textColor="#FFFFFFFF"
 		android:layout_gravity="top"
 		android:ellipsize="end"	></TextView>
 </LinearLayout>

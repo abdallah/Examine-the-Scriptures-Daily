@@ -20,13 +20,13 @@ import android.text.Html;
 import android.text.Spanned;
 import android.widget.RemoteViews;
 
-public class MyWidgetProvider extends AppWidgetProvider {
+public class MyLargeWidgetProvider extends AppWidgetProvider {
 	static DBHelper dbhelper;
 	String lang;
 	private static final String LANG_PREFIX_KEY = "lang_widget_";
 	private static final String THEME_PREFIX_KEY = "theme_widget_";
+	private static final String SIZE_PREFIX_KEY = "size_widget_";
 	private static final String FONT_SIZE_PREFIX_KEY = "font_size_widget_";
-
 	
 	private static DBHelper getDBHelper(Context context) {
 		DBHelper dbh = new DBHelper(context); 
@@ -52,20 +52,27 @@ public class MyWidgetProvider extends AppWidgetProvider {
     	    intent.setData(Uri.withAppendedPath(Uri.parse("esdLang://widget/id/"), String.valueOf(widgetId)));
     	    intent.putExtra("lang", lang);
     	    
-    	    int fontSize = preferences.getInt(FONT_SIZE_PREFIX_KEY + widgetId, 14);
+    	    String theme = preferences.getString(THEME_PREFIX_KEY + widgetId, "e");
+    	    int layout = (theme.equalsIgnoreCase("normal")) ? R.layout.large_widget_layout : R.layout.large_widget_layout_dark;
+    		intent.putExtra("theme", theme);
+    		
+    		int fontSize = preferences.getInt(FONT_SIZE_PREFIX_KEY + widgetId, 14);
+    		
+    		preferences.edit().putString(SIZE_PREFIX_KEY + widgetId, "large").commit();
 	    	
 	    	DBHelper.VerseParts vp = dbhelper.getVerseParts(today, "document", lang);
 	    	Spanned dateDisplay = Html.fromHtml(vp.date);
 	    	todayDisplay = (dateDisplay!=null)? dateDisplay.toString().trim() : todayDisplay;
-	    	StringBuilder text = new StringBuilder(Html.fromHtml(vp.verse).toString());
-	    	RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
+	    	StringBuilder text = new StringBuilder(Html.fromHtml(vp.verse));
+	    	RemoteViews remoteViews = new RemoteViews(context.getPackageName(), layout);
 	    	remoteViews.setTextViewText(R.id.tvTodaysDate, todayDisplay);
-	    	remoteViews.setTextViewText(R.id.tvTodaysText, text);
 	    	remoteViews.setFloat(R.id.tvTodaysDate, "setTextSize", (float) (fontSize +2));
+	    	remoteViews.setTextViewText(R.id.tvTodaysText, text.toString().trim());
 	    	remoteViews.setFloat(R.id.tvTodaysText, "setTextSize", (float) fontSize);
+	    	remoteViews.setTextViewText(R.id.tvTodaysComment, Html.fromHtml(vp.text).toString().trim());
+	    	remoteViews.setFloat(R.id.tvTodaysComment, "setTextSize", (float) fontSize);
 	    	
 			remoteViews.setOnClickPendingIntent(R.id.tvTodaysText, PendingIntent.getActivity(context, widgetId, intent, 0));
-			
 			appWidgetManager.updateAppWidget(widgetId, remoteViews);
     	}
 
@@ -76,6 +83,8 @@ public class MyWidgetProvider extends AppWidgetProvider {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 			preferences.edit().remove(LANG_PREFIX_KEY + widgetId);
 			preferences.edit().remove(THEME_PREFIX_KEY + widgetId);
+			preferences.edit().remove(SIZE_PREFIX_KEY + widgetId);
+
 			preferences.edit().commit();
 		}
 	}
@@ -84,7 +93,7 @@ public class MyWidgetProvider extends AppWidgetProvider {
 	public void onDisabled(Context context) { 
 		AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
 		ComponentName thisWidget = new ComponentName(context,
-				MyWidgetProvider.class);
+				MyLargeWidgetProvider.class);
 		int[] allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
 		for (int widgetId : allWidgetIds) {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -95,7 +104,7 @@ public class MyWidgetProvider extends AppWidgetProvider {
 	}
 	
 
-
+	
 
 	public static void updateAppWidget(Context context,
 			AppWidgetManager appWidgetManager, int mAppWidgetId, String langId, String theme) {
@@ -105,7 +114,7 @@ public class MyWidgetProvider extends AppWidgetProvider {
     	String today = dateFormat.format(calendar.getTime());
     	String todayDisplay = displayFormat.format(calendar.getTime());
     	
-    	int layout = (theme.equalsIgnoreCase("normal")) ? R.layout.widget_layout : R.layout.widget_layout_dark;
+    	int layout = (theme.equalsIgnoreCase("normal")) ? R.layout.large_widget_layout : R.layout.large_widget_layout_dark;
 		RemoteViews remoteViews = new RemoteViews(context.getPackageName(), layout);
 		dbhelper = getDBHelper(context);
 		
@@ -117,17 +126,21 @@ public class MyWidgetProvider extends AppWidgetProvider {
     	StringBuilder sb = new StringBuilder(text.toString());
     	Spanned dateDisplay = Html.fromHtml(vp.date);
     	todayDisplay = (dateDisplay!=null)? dateDisplay.toString().trim() : todayDisplay;
-    	remoteViews.setTextViewText(R.id.tvTodaysText, sb);
+    	remoteViews.setTextViewText(R.id.tvTodaysText, sb.toString().trim());
     	remoteViews.setTextViewText(R.id.tvTodaysDate, todayDisplay);
+    	remoteViews.setTextViewText(R.id.tvTodaysComment, Html.fromHtml(vp.text).toString().trim());
+    	
+    	remoteViews.setFloat(R.id.tvTodaysDate, "setTextSize", (float) (fontSize +2));
+    	remoteViews.setFloat(R.id.tvTodaysText, "setTextSize", (float) fontSize);
+    	remoteViews.setFloat(R.id.tvTodaysComment, "setTextSize", (float) fontSize);
+
     	Intent intent = new Intent(context.getApplicationContext(), ESDailyActivity.class);
 	    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 	    intent.setData(Uri.withAppendedPath(Uri.parse("esdLang://widget/id/"), String.valueOf(mAppWidgetId)));
 	    intent.putExtra("lang", langId);
-	    remoteViews.setFloat(R.id.tvTodaysDate, "setTextSize", (float) (fontSize +2));
-    	remoteViews.setFloat(R.id.tvTodaysText, "setTextSize", (float) fontSize);
-    	
 		remoteViews.setOnClickPendingIntent(R.id.tvTodaysText, PendingIntent.getActivity(context, mAppWidgetId, intent, 0));
-
+		remoteViews.setOnClickPendingIntent(R.id.tvTodaysComment, PendingIntent.getActivity(context, mAppWidgetId, intent, 0));
+		
         // Tell the widget manager
         appWidgetManager.updateAppWidget(mAppWidgetId, remoteViews);
 

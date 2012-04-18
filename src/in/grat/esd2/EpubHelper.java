@@ -58,7 +58,7 @@ public class EpubHelper {
 		hrefFormat = new SimpleDateFormat("MM_'ES"+this.year+"'_.MMM");
 	}
 	public EpubHelper(String filename, Context context) {
-				try {
+		try {
 			this.book = (new EpubReader()).readEpub(new FileInputStream(filename));
 			this.context = context;
 			getBookInfo();
@@ -95,9 +95,10 @@ public class EpubHelper {
 		String hrefDate = getHrefForDay(day, type);
 		String hrefDateAlt = getHrefForDay(day, type, true);
 		Resource r = this.book.getResources().getByHref(hrefDate); 
-		if (r==null) { 
-			r = this.book.getResources().getByHref(hrefDateAlt);
-		}
+		if (r==null) 
+			r = this.book.getResources().getByHref(hrefDateAlt); // For Italian
+		if (r==null)
+			r = this.book.getResources().getByHref("Text/"+hrefDate); // For Polish
 		if (r!=null) {	return new String( r.getData() ); } else { return ""; }
 	}
 	
@@ -168,6 +169,10 @@ public class EpubHelper {
 		dbHelper = new DBHelper(this.context);
 		db = dbHelper.getWritableDatabase();
 		String Year = "20"+this.year;
+		
+		// clear old entries for the same information
+		dbHelper.removeEntriesFor(Year, lang);
+		
 		Date first;
 		try {
 			first = dateFormat.parse(Year+"-01-01");

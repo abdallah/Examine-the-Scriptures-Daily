@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent" android:layout_height="match_parent"
+	android:layout_margin="8dip" 
+	android:background="@drawable/shape_dark"
+	android:orientation="vertical">
+
+	<TextView
+	    android:id="@+id/tvTodaysDate"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="center"
+	    android:layout_margin="2dip"
+	    android:layout_marginBottom="2dp"
+	    android:gravity="center"
+	    android:text="Date 00, 2011"
+	    android:textColor="#FFFFFFFF"
+	    android:textSize="16sp"
+	    android:textStyle="bold"
+	    android:typeface="serif" >
+	</TextView>	
+	
+	<TextView
+	    android:id="@+id/tvTodaysText"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="top"
+	    android:layout_margin="2dp"
+	    android:ellipsize="end"
+	    android:gravity="center"
+	    android:paddingLeft="3dp"
+	    android:paddingRight="3dp"
+	    android:text="Please wait while loading the text..."
+	    android:textColor="#FFFFFFFF"
+	    android:textSize="14sp"
+	    android:textStyle="italic"
+	    android:typeface="sans" >
+	</TextView>
+	<Button
+	 	android:layout_width="wrap_content"
+	 	android:layout_gravity="center"
+		android:layout_height="1dp"
+		android:text="________________________________________________"
+		android:background="#FFFFFFFF" ></Button>
+
+	<TextView
+	    android:id="@+id/tvTodaysComment"
+	    android:layout_width="fill_parent"
+	    android:layout_height="match_parent"
+	    android:layout_gravity="top"
+	    android:layout_margin="2dp"
+	    android:gravity="left"
+	    
+	    android:paddingLeft="6dp"
+	    android:paddingRight="2dp"
+	    android:paddingBottom="5dp"
+	    android:text="loading ..."
+	    android:textColor="#FFFFFFFF"
+	    android:textSize="14sp"
+	    android:typeface="sans" />
+
+</LinearLayout>

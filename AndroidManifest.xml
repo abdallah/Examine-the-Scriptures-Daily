@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="in.grat.esd2"
-      android:versionCode="12"
-      android:versionName="2.0.12">
+      android:versionCode="15"
+      android:versionName="2.0.15">
     <uses-sdk android:minSdkVersion="10" android:targetSdkVersion="11" />
 
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@android:style/Theme.Light.NoTitleBar">
@@ -15,12 +15,19 @@
 <!--                 <data android:scheme="esdLang"></data> -->				
             </intent-filter>
         </activity>
-		<receiver android:name=".MyWidgetProvider">
+		<receiver android:name=".MyWidgetProvider" android:label="@string/small_widget">
 			<intent-filter>
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
 			</intent-filter>
 			<meta-data android:name="android.appwidget.provider"
 				android:resource="@xml/widget_info" />
+		</receiver>
+		<receiver android:name=".MyLargeWidgetProvider" android:label="@string/large_widget">
+			<intent-filter>
+				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+			</intent-filter>
+			<meta-data android:name="android.appwidget.provider"
+				android:resource="@xml/large_widget_info" />
 		</receiver>
 		<activity android:label="Preferences" android:name="PrefsActivity"></activity>
 		<activity android:label="FilePicker" android:name=".FilePickerActivity"></activity>

@@ -4,4 +4,10 @@
     <string name="app_name">Examine Scriptures Daily</string>
     <string name="ellipsis">&#8230;</string>
     <string name="save">Save</string>
+    <string name="small_widget">Examine Scriptures Daily</string>
+    <string name="large_widget">Examine Scriptures Daily (with comment)</string>
+    <string name="lblLanguage">Choose Language</string>
+    <string name="lblTheme">Choose Theme</string>
+    <string name="lblFontSize">Choose Font Size</string>
+    
 </resources>

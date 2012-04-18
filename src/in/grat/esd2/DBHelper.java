@@ -261,6 +261,11 @@ public class DBHelper extends SQLiteOpenHelper {
 			
 	}
 	
+	public Cursor removeEntriesFor(String year, String lang) {
+		String q = "DELETE FROM " + TABLE_NAME + " WHERE date LIKE '" + year + "%' AND lang='" + lang + "' COLLATE NOCASE";
+		Cursor mCursor = myDataBase.rawQuery(q, null);
+		return mCursor;
+	}
 
 	public Cursor fetchLanguages() throws SQLException {
 		String q =  "SELECT DISTINCT id as _id, name FROM "+LANG_TABLE_NAME+" INNER JOIN "+TABLE_NAME+" on "+LANG_TABLE_NAME+".id = "+TABLE_NAME+".lang COLLATE NOCASE";

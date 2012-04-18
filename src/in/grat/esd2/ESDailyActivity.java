@@ -45,14 +45,14 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.text.Html;
 import android.text.Spannable;
-
-import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.URLSpan;
 
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.ContextThemeWrapper;
@@ -62,6 +62,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.View.OnLongClickListener;
 import android.view.ViewConfiguration;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
@@ -179,6 +180,8 @@ public class ESDailyActivity extends Activity {
         	}
         	tv.setMovementMethod(LinkMovementMethod.getInstance());
         	tv.setOnTouchListener(gestureListener);
+        	registerForContextMenu(tv);
+        	
         }
 		otherView = false;
 	}
@@ -209,6 +212,12 @@ public class ESDailyActivity extends Activity {
     	setDates(currentDate);
     }
 
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+    	super.onCreateContextMenu(menu, v, menuInfo); 
+    	MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+    }
     
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -246,6 +255,37 @@ public class ESDailyActivity extends Activity {
             return super.onOptionsItemSelected(item);
         }
     }
+    
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+    	switch (item.getItemId()) {
+        case R.id.mnuGoto:
+        	showDialog(DATE_DIALOG_ID);
+            return true;
+        case R.id.mnuShare:
+        	Intent i = createShareIntent();
+        	startActivity(i);
+            return true;
+        case R.id.mnuToday:
+        	gotoToday();
+        	return true;
+        case R.id.mnuImport:
+        	Intent intent = new Intent(ESDailyActivity.this, FilePickerActivity.class);
+			ArrayList<String> extensions = new ArrayList<String>();
+			extensions.add(".epub");
+			intent.putExtra(FilePickerActivity.EXTRA_ACCEPTED_FILE_EXTENSIONS, extensions);
+			intent.putExtra(FilePickerActivity.EXTRA_FILE_PATH, "/sdcard/download");
+			startActivityForResult(intent, REQUEST_PICK_FILE);
+			return true;
+        case R.id.mnuPrefs: 
+        	Intent p = new Intent(ESDailyActivity.this, PrefsActivity.class);
+			startActivityForResult(p, REQUEST_PREFERENCES);
+        default:
+            return super.onContextItemSelected(item);
+        }
+    }
+    
+    
     
     @Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -336,12 +376,7 @@ public class ESDailyActivity extends Activity {
 	        mScaleFactor *= detector.getScaleFactor();
 	        
 	        // Don't let the object get too small or too large.
-	        mScaleFactor = Math.max(8.0f, Math.min(mScaleFactor, 25.0f));
-//	        if (mScaleFactor > 1) {
-//	        	Log.d("ESD2", "Zooming in, enlarge font");
-//	        } else { 
-//	        	Log.d("ESD2", "Zooming out, zagher");
-//	        }
+	        mScaleFactor = Math.max(8.0f, Math.min(mScaleFactor, 24.0f));
 	        TextView[] tvs = { tv1, tv2, tvVerse1, tvVerse2, tvDate1, tvDate2 };
 	        for (TextView tv : tvs) {
 	        	if (tv == tvDate1 || tv == tvDate2) {
