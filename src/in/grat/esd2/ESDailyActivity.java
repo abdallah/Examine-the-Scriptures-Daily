@@ -35,8 +35,10 @@ import android.app.Dialog;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
@@ -62,7 +64,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.view.View.OnLongClickListener;
 import android.view.ViewConfiguration;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
@@ -83,15 +84,12 @@ public class ESDailyActivity extends Activity {
 	View.OnTouchListener gestureListener;
 	Context ctx;
 	private Animation slideLeftIn, slideLeftOut, slideRightIn, slideRightOut;
-    //private TextSwitcher textSwitcher;
     private ViewFlipper flipper;
     public String mLang, mTheme;
     
 	//private Context context;
 	private int mYear, mMonth, mDay;
 
-//	WebView wv1; 
-//	WebView wv2;
 	TextView tv1, tv2, tvVerse1, tvVerse2, tvDate1, tvDate2;
 	boolean otherView;
 	SimpleDateFormat dateFormat, displayFormat;
@@ -111,7 +109,7 @@ public class ESDailyActivity extends Activity {
 
 	DBHelper dbHelper;
 	ProgressDialog dialog;
-	
+		
 	public void initUI() {
 		ViewConfiguration vc = ViewConfiguration.get(getApplicationContext());
     	SWIPE_MIN_DISTANCE = vc.getScaledTouchSlop();
@@ -149,6 +147,9 @@ public class ESDailyActivity extends Activity {
         }
         if (mLang==null) { mLang = preferences.getString("lang", "e"); }
         mTheme = preferences.getString("theme", "normal");
+        if (getIntent().hasExtra("theme")) {
+        	mTheme = getIntent().getStringExtra("theme");
+        }
         if (mTheme.equalsIgnoreCase("normal")) { 
         	//this.setTheme(android.R.style.Theme_NoTitleBar);
         } else if (mTheme.equalsIgnoreCase("inverted")) { 
@@ -298,7 +299,6 @@ public class ESDailyActivity extends Activity {
 							data.getStringExtra(FilePickerActivity.EXTRA_FILE_PATH));
 					dialog = ProgressDialog.show(ctx, "Reading ePub file", "Please wait...", true);
 					importEPub(f.getPath());
-					
 				}
 				break;
 			case REQUEST_PREFERENCES:
@@ -319,8 +319,14 @@ public class ESDailyActivity extends Activity {
 			@Override
 			public void run() {
 				EpubHelper epub = new EpubHelper(path, ctx);
-				epub.exportToDB();
-				handler.sendEmptyMessage(0);
+				Bundle bundle = epub.exportToDB();
+				if (bundle != null) { 
+					Message msg = handler.obtainMessage();
+					msg.setData(bundle);
+					handler.sendMessage(msg);
+				} else {
+					handler.sendEmptyMessage(0); 
+				}
 			}
 		};
 		new Thread(runnable).start();
@@ -330,7 +336,31 @@ public class ESDailyActivity extends Activity {
     private Handler handler = new Handler() { 
     	@Override
     	public void handleMessage(Message msg) {
+    		Bundle bundle = msg.getData();
     		dialog.dismiss();
+    		if (bundle!=null) {
+    			final String newLanguage = bundle.getString("lang");
+    			final String newLangId = bundle.getString("langId");
+    			DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						switch (which){
+					        case DialogInterface.BUTTON_POSITIVE:
+					        	Editor prefs = PreferenceManager.getDefaultSharedPreferences(ctx).edit();
+					        	prefs.putString("lang", newLangId).commit();
+					        	restartApp();
+					        	break;
+					        case DialogInterface.BUTTON_NEGATIVE:
+					        	break;
+						}
+					}
+    			};
+    			AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+    			builder.setMessage("Finished importing "+newLanguage+". Would you like to use it?")
+    					.setPositiveButton("Yes", dialogClickListener)
+    					.setNegativeButton("No", dialogClickListener).show();
+
+       		}
     	}
     };
     

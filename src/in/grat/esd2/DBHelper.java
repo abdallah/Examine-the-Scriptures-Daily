@@ -276,5 +276,14 @@ public class DBHelper extends SQLiteOpenHelper {
 		return mCursor;
 	}
 
+	public String getLanguageById(String langId) {
+		String q = "SELECT name FROM "+LANG_TABLE_NAME+" WHERE id='"+langId.toUpperCase()+"'";
+		Cursor mCursor = myDataBase.rawQuery(q, null);
+		if (mCursor != null) {
+			mCursor.moveToFirst();
+			return mCursor.getString(0);
+		}
+		return "Unidentified Language!";
+	}
 	
 }

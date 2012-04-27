@@ -73,6 +73,7 @@ public class MyLargeWidgetProvider extends AppWidgetProvider {
 	    	remoteViews.setFloat(R.id.tvTodaysComment, "setTextSize", (float) fontSize);
 	    	
 			remoteViews.setOnClickPendingIntent(R.id.tvTodaysText, PendingIntent.getActivity(context, widgetId, intent, 0));
+			remoteViews.setOnClickPendingIntent(R.id.tvTodaysComment, PendingIntent.getActivity(context, widgetId, intent, 0));
 			appWidgetManager.updateAppWidget(widgetId, remoteViews);
     	}
 

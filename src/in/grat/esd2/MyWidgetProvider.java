@@ -51,6 +51,9 @@ public class MyWidgetProvider extends AppWidgetProvider {
     	    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     	    intent.setData(Uri.withAppendedPath(Uri.parse("esdLang://widget/id/"), String.valueOf(widgetId)));
     	    intent.putExtra("lang", lang);
+    	    String theme = preferences.getString(THEME_PREFIX_KEY + widgetId, "e");
+    	    int layout = (theme.equalsIgnoreCase("normal")) ? R.layout.widget_layout : R.layout.widget_layout_dark;
+    		intent.putExtra("theme", theme);
     	    
     	    int fontSize = preferences.getInt(FONT_SIZE_PREFIX_KEY + widgetId, 14);
 	    	
@@ -58,7 +61,7 @@ public class MyWidgetProvider extends AppWidgetProvider {
 	    	Spanned dateDisplay = Html.fromHtml(vp.date);
 	    	todayDisplay = (dateDisplay!=null)? dateDisplay.toString().trim() : todayDisplay;
 	    	StringBuilder text = new StringBuilder(Html.fromHtml(vp.verse).toString());
-	    	RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
+	    	RemoteViews remoteViews = new RemoteViews(context.getPackageName(),layout);
 	    	remoteViews.setTextViewText(R.id.tvTodaysDate, todayDisplay);
 	    	remoteViews.setTextViewText(R.id.tvTodaysText, text);
 	    	remoteViews.setFloat(R.id.tvTodaysDate, "setTextSize", (float) (fontSize +2));
@@ -123,6 +126,8 @@ public class MyWidgetProvider extends AppWidgetProvider {
 	    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 	    intent.setData(Uri.withAppendedPath(Uri.parse("esdLang://widget/id/"), String.valueOf(mAppWidgetId)));
 	    intent.putExtra("lang", langId);
+		intent.putExtra("theme", theme);
+
 	    remoteViews.setFloat(R.id.tvTodaysDate, "setTextSize", (float) (fontSize +2));
     	remoteViews.setFloat(R.id.tvTodaysText, "setTextSize", (float) fontSize);
     	
