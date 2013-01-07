@@ -31,10 +31,10 @@ public class EpubHelper {
 	public String lang = "E";
 
 	public enum Variation { 
-		Original ("MM_'ES12'_.MMM", "00", ""),
-		Italian ("0MM_'ES12'.MMM", "000", ""), // works for Italian, Portuguese 
-		Polish ("MM_'ES12'_.MMM", "00", "Text/"), 
-		Ga ("MM_'ES12'", "00", "");
+		Original ("MM_'ES'yy_.MMM", "00", ""),
+		Italian ("0MM_'ES'yy.MMM", "000", ""), // works for Italian, Portuguese 
+		Polish ("MM_'ES'yy_.MMM", "00", "Text/"), 
+		Ga ("MM_'ES'yy", "00", "");
 		
 		private SimpleDateFormat format;
 		private DecimalFormat zeros;

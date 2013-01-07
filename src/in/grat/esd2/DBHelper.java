@@ -219,7 +219,7 @@ public class DBHelper extends SQLiteOpenHelper {
     	InputSource inStream = new InputSource();
     	String sVerse = "verse not found";
     	String sDate = "unidentified date";
-    	String sText = "text not found";
+    	String sText = "";
     	DocumentBuilder builder;
 		try {
 			inStream.setCharacterStream(new StringReader(doc));
@@ -239,11 +239,12 @@ public class DBHelper extends SQLiteOpenHelper {
 					} else if (cls.getNodeValue().equalsIgnoreCase("ss")) { 
 						sDate = buffer.toString();
 					} else if (cls.getNodeValue().equalsIgnoreCase("sb")) {
-						sText = buffer.toString();
+						sText += buffer.toString();
 					}
 					
  				}
 			}
+			sText = sText.length() < 1 ? "No text found!" : sText;
 			PartsExtractedOK = true;
 			return new VerseParts(sDate, sVerse, sText);
 		} catch (ParserConfigurationException e) {
